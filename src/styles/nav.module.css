@@ -1,0 +1,46 @@
+.container{
+  position: relative;
+  z-index: 1;
+  height:7vh;
+  background-color: black;
+  box-shadow: 0px 5px 10px 1px rgba(185, 174, 185, 0.541);
+}
+
+.navLinksContainer{
+  display:flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.navLinks{
+  display:flex;
+  flex-direction:row;
+  justify-content: center;
+  align-items: center;
+}
+
+.link{
+  font-size: 2em;
+  margin: 1rem;
+}
+
+.link>a{
+  all:unset;
+  color:white;
+  text-decoration: underline;
+  -webkit-touch-callout: none; /* iOS Safari */
+    -webkit-user-select: none; /* Safari */
+     -khtml-user-select: none; /* Konqueror HTML */
+       -moz-user-select: none; /* Old versions of Firefox */
+        -ms-user-select: none; /* Internet Explorer/Edge */
+            user-select: none;
+}
+
+.link>a:hover{
+  color:aquamarine;
+  
+}
+
+.home>a:hover{
+  color:blueviolet;
+}
