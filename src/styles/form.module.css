@@ -50,8 +50,13 @@
   color:white;
   display: flex;
   flex-direction:row;
-  justify-content:space-between;
-  
+  margin-bottom:2rem;
+  /* justify-content:space-between; */
+}
+
+.options>input{
+  width:2rem;
+  border-radius: 50%;
 }
 
 .inputContainer{

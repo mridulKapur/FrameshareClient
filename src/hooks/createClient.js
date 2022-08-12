@@ -8,11 +8,11 @@ let tokenRtc = undefined
 const useAgoraRtm = (roomName,client,rtcClient,name,appID,role) => {
   const [messages, setMessages] = useState([{}]);
   const [users, setUsers] = useState([]);
-  // const [usersrtc, setUsersrtc] = useState([]);
   const [currentMessage, setCurrentMessage] = useState({});
-  const channel = useRef(client.createChannel(roomName)).current;
+  const channel = useRef(name==null?null:client.createChannel(roomName)).current;
 
   const initRtm = async () => {
+    if (!name) return;
     console.log(role);
     await fetch(`https://codealive.herokuapp.com/api/v1/agora/rtmToken?account=${uid}`)
       .then(data => {
@@ -33,7 +33,6 @@ const useAgoraRtm = (roomName,client,rtcClient,name,appID,role) => {
         tokenRtc = data.key;
       });
     //LOGIN
-    
     const options = {
       // Pass your app ID here.
       appId: appID,
@@ -71,6 +70,25 @@ const useAgoraRtm = (roomName,client,rtcClient,name,appID,role) => {
   }
 
   const leave = async () => {
+    var myHeaders = new Headers();
+    myHeaders.append("Content-Type", "application/json");
+
+    var raw = JSON.stringify({
+      "host": name
+    });
+
+    var requestOptions = {
+      method: 'DELETE',
+      headers: myHeaders,
+      body: raw,
+      redirect: 'follow'
+    };
+
+    fetch("http://localhost:8080/api/v1/streams/removeStream", requestOptions)
+      .then(response => response.text())
+      .then(result => console.log(result))
+      .catch(error => console.log('error', error));
+    
     await channel.leave();
     await client.logout();
   }
@@ -111,14 +129,14 @@ const useAgoraRtm = (roomName,client,rtcClient,name,appID,role) => {
   },[users])
 
   useEffect(() => {
-    channel.on("MemberJoined",async (uid) => {
+    channel?.on("MemberJoined",async (uid) => {
       const { name } = await client.getUserAttributes(uid, ['name']);
       setUsers(users => [...users,name]);
     });
-    channel.on("ChannelMessage", (data, uid) => {
+    channel?.on("ChannelMessage", (data, uid) => {
       handleMessageReceived(data, uid);
     });
-    channel.on('MemberLeft', () => {
+    channel?.on('MemberLeft', () => {
       setUsers(users => users.filter(user => user !== name))
     })
   }, []);

@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route ,Link} from "react-router-dom";
-import { Room, RoomId } from "../src/components/room.js";
+import { Room, RoomId } from "./components/room.js";
 import { User, Login, Signup } from "./components/user.js";
+import { Streams } from "./components/streams.js";
 import {Navbar} from "./components/navbar.js"
 import JoinRoom from "./components/joinRoom.js";
 import styles from "./styles/home.module.css"
@@ -11,6 +12,8 @@ function App() {
       <Navbar />
       <div className={styles.mainContainer}>
       <Routes>
+        <Route path = "streams" element = {<Streams/>}>  
+        </Route>  
         <Route path="room" element={<Room />}>
           <Route path="join" element={<JoinRoom/>}/>
           <Route path=":roomId" element={<RoomId />} /> 

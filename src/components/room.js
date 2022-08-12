@@ -1,5 +1,5 @@
 import {React,useEffect,useState,useRef} from 'react'
-import { useParams, Outlet, useLocation} from "react-router-dom";
+import { useParams, Outlet, useLocation, useNavigate} from "react-router-dom";
 
 import AgoraRTM from "agora-rtm-sdk"
 import AgoraRTC from "agora-rtc-sdk-ng"
@@ -7,11 +7,24 @@ import useAgoraRtm from "../hooks/createClient.js"
 
 import styles from "../styles/room.module.css"
 
-let appID = "0f436fb449614271ad9870b7b24c33fc";
-// let appCertificate = "27e892331db54a2788fe2820e679bcf6"
+let appID = "0f436fb449614271ad9870b7b24c33fc"; 
 
-const rtmClient = AgoraRTM.createInstance(appID);
-const rtcClient = AgoraRTC.createClient({ mode: "live", codec: "vp8" });
+const addToDb = (data) => {
+  var myHeaders = new Headers();
+    myHeaders.append("Content-Type", "application/json");
+  var raw = JSON.stringify(data);
+    var requestOptions = {
+      method: "POST",
+      headers: myHeaders,
+      body: raw,
+      redirect: "follow",
+    };
+    fetch("http://localhost:8080/api/v1/streams/addStream", requestOptions)
+      .then((response) => response.text())
+      .then((result) => console.log(result))
+      .catch((error) => console.log("error", error));
+}
+
 const Room = () => {
   return (
       <Outlet/>
@@ -19,15 +32,24 @@ const Room = () => {
 }
 
 const RoomId = () => {
+  let localScreenTracks,messages, sendChannelMessage, users,rtcClient,rtmClient;
+  const navigate = useNavigate();
   const { state } = useLocation();
-  const { name , role} = state;
   const { roomId } = useParams();
-  let localScreenTracks;
+  console.log(state);
+  if (state!==null) {
+    state.roomId = roomId;
+    if(state.role==="host")
+      addToDb(state);   
+    rtcClient = AgoraRTC.createClient({ mode: "live", codec: "vp8" });
+    rtmClient = AgoraRTM.createInstance(appID);
+  }
+  ({ messages, sendChannelMessage, users } = useAgoraRtm(roomId, rtmClient, rtcClient, state.host, appID, state.role));
+  
   const [track, setTrack] = useState();
   const [textArea, setTextArea] = useState("");
   const [streaming, setSetreaming] = useState(false);
   // const [names, setNames] = useState([]);
-  const { messages, sendChannelMessage, users } = useAgoraRtm(roomId, rtmClient,rtcClient, name, appID, role);
   const messagesEndRef = useRef(null)
 
   const toggleVideoShare = async () => {
@@ -53,11 +75,16 @@ const RoomId = () => {
   }
 
   useEffect(() => {
+    if (!state)
+      navigate(`/room/join`);
+  },[])
+
+  useEffect(() => {
     scrollToBottom()
   }, [messages]);
 
   useEffect(() => {
-    rtcClient.on("user-published", async (user, mediaType) => {
+    rtcClient?.on("user-published", async (user, mediaType) => {
       await rtcClient.subscribe(user, mediaType);
       if (mediaType === "video") {
         const remoteVideoTrack = user.videoTrack;
@@ -65,7 +92,6 @@ const RoomId = () => {
       }
     })
   //   toggleVideoShare();
-    
   }, [])
 
   const submitMessage = (e) => {
@@ -79,7 +105,7 @@ const RoomId = () => {
   return (
     <div className={styles.room}>
       <div className={styles.roomName}>
-        {roomId}
+        {state.name}
       </div>
       <div className={styles.roomComponents}>  
         <section id="users_container" className={styles.usersContainer}>
@@ -88,7 +114,7 @@ const RoomId = () => {
         </section>
         <section id="video" className={styles.videoContainer}>
           <div id="me" className={styles.video}></div>
-          {role === "host" ? <button onClick={toggleVideoShare} className={styles.startStreamBtn}>{}</button> : null}
+          {state.role === "host" ? <button onClick={toggleVideoShare} className={styles.startStreamBtn}>{}</button> : null}
         </section>
         <section id="chat__container" className={styles.chatContainer}>
           <div id="messages" className={styles.chatBox}>
@@ -114,3 +140,5 @@ const RoomId = () => {
 }
 
 export { Room, RoomId }
+
+
