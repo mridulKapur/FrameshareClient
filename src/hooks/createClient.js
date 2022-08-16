@@ -1,31 +1,36 @@
 import {useEffect,useState,useRef} from "react";
+import AgoraRTM from "agora-rtm-sdk"
+import AgoraRTC from "agora-rtc-sdk-ng"
 
 let rtcuid = Math.floor(Math.random() * 256)
 let uid = String(rtcuid);
 let token = undefined
 let tokenRtc = undefined
+let appID = "0f436fb449614271ad9870b7b24c33fc";
 
-const useAgoraRtm = (roomName,client,rtcClient,name,appID,role) => {
+const useAgoraRtm = (roomName, name, role,rtcClient) => {
+  const rtmClient = AgoraRTM.createInstance(appID);
+  const [streaming, setSetreaming] = useState(false);
+  const [track, setTrack] = useState(false);
   const [messages, setMessages] = useState([{}]);
   const [users, setUsers] = useState([]);
   const [currentMessage, setCurrentMessage] = useState({});
-  const channel = useRef(name==null?null:client.createChannel(roomName)).current;
+  const channel = useRef(rtmClient.createChannel(roomName)).current;
 
   const initRtm = async () => {
-    if (!name) return;
     console.log(role);
-    await fetch(`https://codealive.herokuapp.com/api/v1/agora/rtmToken?account=${uid}`)
+    await fetch(`http://localhost:8080/api/v1/agora/rtmToken?account=${uid}`)
       .then(data => {
         return data.json();
       })
       .then(data => {
         token = data.key;
       });
-    await client.login({ uid, token });
+    await rtmClient.login({ uid, token });
     await channel.join();
-    await client.addOrUpdateLocalUserAttributes({ 'name': name });
+    await rtmClient.addOrUpdateLocalUserAttributes({ 'name': name });
     await setUsersState();
-    await fetch(`https://codealive.herokuapp.com/api/v1/agora/rtcToken?channelName=${roomName}`)
+    await fetch(`http://localhost:8080/api/v1/agora/rtcToken?channelName=${roomName}`)
       .then(data => {
         return data.json();
       })
@@ -33,6 +38,7 @@ const useAgoraRtm = (roomName,client,rtcClient,name,appID,role) => {
         tokenRtc = data.key;
       });
     //LOGIN
+    
     const options = {
       // Pass your app ID here.
       appId: appID,
@@ -51,12 +57,12 @@ const useAgoraRtm = (roomName,client,rtcClient,name,appID,role) => {
     // }
     rtcClient.setClientRole(role)
     await rtcClient.join(options.appId, options.channel, options.token, options.uid);
-    const users = await rtcClient.remoteUsers;
+    const users = rtcClient.remoteUsers;
     console.log(users);
   }
 
   const getUserAtt = async (memberId) => {
-    return await client.getUserAttributes(memberId, ['name']);
+    return await rtmClient.getUserAttributes(memberId, ['name']);
   }
 
   const setUsersState = async () => {
@@ -70,31 +76,12 @@ const useAgoraRtm = (roomName,client,rtcClient,name,appID,role) => {
   }
 
   const leave = async () => {
-    var myHeaders = new Headers();
-    myHeaders.append("Content-Type", "application/json");
-
-    var raw = JSON.stringify({
-      "host": name
-    });
-
-    var requestOptions = {
-      method: 'DELETE',
-      headers: myHeaders,
-      body: raw,
-      redirect: 'follow'
-    };
-
-    fetch("http://localhost:8080/api/v1/streams/removeStream", requestOptions)
-      .then(response => response.text())
-      .then(result => console.log(result))
-      .catch(error => console.log('error', error));
-    
     await channel.leave();
-    await client.logout();
+    await rtmClient.logout();
   }
 
   const handleMessageReceived = async (data, uid) => {
-    const user = await client.getUserAttributes(uid);
+    const user = await rtmClient.getUserAttributes(uid);
     if (data.messageType === "TEXT") {
       const newMessageData = {uid:user.name, message: data.text };
       setCurrentMessage(newMessageData);
@@ -115,9 +102,35 @@ const useAgoraRtm = (roomName,client,rtcClient,name,appID,role) => {
       });
   };
 
+  const toggleVideoShare = async () => {
+    if (!streaming) { 
+      await rtcClient.setClientRole('host');
+      const localScreenTracks = await AgoraRTC.createScreenVideoTrack();
+      setTrack(localScreenTracks);
+      localScreenTracks.play('me')
+      await rtcClient.publish(localScreenTracks);
+      setSetreaming (true);
+    }
+    else {
+      await rtcClient.unpublish();
+      setSetreaming(false);
+      track.stop();
+    }
+  }
+
   useEffect(() => {
     initRtm();
   }, []);
+
+  useEffect(() => {
+    rtcClient.on("user-published", async (user, mediaType) => {
+      await rtcClient.subscribe(user, mediaType);
+      if (mediaType === "video") {
+        const remoteVideoTrack = user.videoTrack;
+        remoteVideoTrack.play("me");
+      }
+    })
+  }, [])
 
   useEffect(() => {
       window.addEventListener("beforeunload", leave);
@@ -129,14 +142,14 @@ const useAgoraRtm = (roomName,client,rtcClient,name,appID,role) => {
   },[users])
 
   useEffect(() => {
-    channel?.on("MemberJoined",async (uid) => {
-      const { name } = await client.getUserAttributes(uid, ['name']);
+    channel.on("MemberJoined",async (uid) => {
+      const { name } = await rtmClient.getUserAttributes(uid, ['name']);
       setUsers(users => [...users,name]);
     });
-    channel?.on("ChannelMessage", (data, uid) => {
+    channel.on("ChannelMessage", (data, uid) => {
       handleMessageReceived(data, uid);
     });
-    channel?.on('MemberLeft', () => {
+    channel.on('MemberLeft', () => {
       setUsers(users => users.filter(user => user !== name))
     })
   }, []);
@@ -145,7 +158,8 @@ const useAgoraRtm = (roomName,client,rtcClient,name,appID,role) => {
     if (currentMessage) setMessages([...messages, currentMessage]);
   }, [currentMessage]);
 
-  return { sendChannelMessage, messages ,users};
+
+  return { sendChannelMessage, messages ,users,toggleVideoShare};
 };
 
 export default useAgoraRtm;
