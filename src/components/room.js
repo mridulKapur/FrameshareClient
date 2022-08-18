@@ -1,7 +1,7 @@
 import { React, useEffect, useState, useRef } from "react";
 import { useParams, Outlet, useLocation, useNavigate } from "react-router-dom";
 
-import AgoraRTM from "agora-rtm-sdk";
+// import AgoraRTM from "agora-rtm-sdk";
 import AgoraRTC from "agora-rtc-sdk-ng";
 import useAgoraRtm from "../hooks/createClient.js";
 
@@ -30,11 +30,12 @@ const Room = () => {
 
 const rtcClient = AgoraRTC.createClient({ mode: "live", codec: "vp8" });
 const RoomId = () => {
+	const navigate = useNavigate();
 	const { state } = useLocation();
 	const { roomId } = useParams();
   state.roomId = roomId;
   if (state.role === "host") addToDb(state);
-	const { messages, sendChannelMessage, users ,toggleVideoShare} = useAgoraRtm(
+	const { messages, sendChannelMessage ,toggleVideoShare} = useAgoraRtm(
 		roomId,
 		state.host,
 		state.role,
@@ -61,10 +62,10 @@ const RoomId = () => {
     setTextArea("");
   };
 	
-	const leaveRoom = () => {
-		leave();
-		navigate(`/`);
-	};
+	// const leaveRoom = () => {
+	// 	leave();
+	// 	navigate(`/`);
+	// };
 
 	return (
 		<div className={styles.room}>
@@ -88,11 +89,11 @@ const RoomId = () => {
 							{}
 						</button>
 					) : null}
-					{state.role === "host" ? (
+					{/* {state.role === "host" ? (
 						<button onClick={leaveRoom} className={styles.startStreamBtn}>
 							{}
 						</button>
-					) : null}
+					) : null} */}
 				</section>
 				<section id='chat__container' className={styles.chatContainer}>
 					<div id='messages' className={styles.chatBox}>

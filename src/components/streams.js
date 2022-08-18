@@ -1,6 +1,6 @@
 import { React, useState ,useEffect} from 'react'
 import { useNavigate,Link } from 'react-router-dom'
-import styles from '../styles/form.module.css'
+import styles from '../styles/stream.module.css'
 import md5 from "crypto-js/md5"
 
 const streamElement = (streamInfo) => {
@@ -13,13 +13,18 @@ const streamElement = (streamInfo) => {
 			},
 		});
   }
+  const start = new Date(Date.now()),end = new Date(streamInfo.streamStart);
+  const diff = start.getTime()-end.getTime();
+  const t = new Date(diff);
+  const h = t.getUTCHours();
+  const m = t.getUTCMinutes();
+  console.log(streamInfo.thumbNail);
   return (
-    <div onClick={join}>
-      nice
-      <div>{streamInfo.streamName}</div>
-      <div>{streamInfo.hostId}</div>
-      <div>{streamInfo.thumbNail}</div>
-      <div>{streamInfo.streamStart}</div>
+    <div onClick={join} className={styles.streamElement}>
+      <div className={styles.streamThumbnail} style={{backgroundImage: `url(${streamInfo?.thumbNail}) , url("https://picsum.photos/id/237/200/300")`}}></div>
+      <div className={styles.streamInfo}>{streamInfo.streamName}</div>
+      <div className={styles.streamHost}>{streamInfo.hostId}</div>
+      <div className={styles.streamtime}>{h}:{m} hours ago</div>
     </div>
   )
 }
@@ -46,9 +51,8 @@ const Streams = () => {
 
   
   return (
-    <div>
-      <div>Streams</div>
-      <div>{streams.map(ele => streamElement({...ele,navigate}))}</div>
+    <div className={styles.container}>
+      <div className={styles.streamsContainer}>{streams.map(ele => streamElement({...ele,navigate}))}</div>
     </div>
   )
 }

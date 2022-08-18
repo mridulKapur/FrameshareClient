@@ -1,0 +1,52 @@
+.container{
+  height: 93vh;
+  padding:1rem;
+}
+
+.streamsContainer{
+  display:grid;
+  grid-template-columns:repeat(3,auto);
+}
+
+.streamElement{
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  /* align-items: center; */
+  padding:0 10%;
+}
+ 
+.streamThumbnail{
+  background-image:url("https://picsum.photos/id/237/200/300");
+  background-color: black;
+  background-repeat:no-repeat;
+  background-position: center;
+  background-size: contain;
+  /* background-attachment: fixed;  */
+  width:100%;
+  aspect-ratio: 4 / 3;
+}
+
+.streamInfo{
+  font-family: "Roboto","Arial",sans-serif;
+  font-size: 1.4rem;
+  line-height: 2rem;
+  font-weight: 500;
+  max-height: 4rem;
+  overflow: hidden;
+  display: block;
+  text-overflow: ellipsis;
+  white-space: normal;
+}
+
+.streamInfo{
+  font-family: "Roboto","Arial",sans-serif;
+  font-size: 1.4rem;
+  line-height: 2rem;
+  font-weight: 500;
+  max-height: 4rem;
+  overflow: hidden;
+  display: block;
+  text-overflow: ellipsis;
+  white-space: normal;
+}

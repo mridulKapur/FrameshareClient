@@ -159,7 +159,7 @@ const useAgoraRtm = (roomName, name, role,rtcClient) => {
   }, [currentMessage]);
 
 
-  return { sendChannelMessage, messages ,users,toggleVideoShare};
+  return { sendChannelMessage, messages,toggleVideoShare};
 };
 
 export default useAgoraRtm;
